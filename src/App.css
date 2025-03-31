@@ -1,5 +1,16 @@
 .App {
-  text-align: center;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  background: #000000;
+}
+
+canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .App-logo {
@@ -35,4 +46,18 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background: black;
+}
+
+#root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
