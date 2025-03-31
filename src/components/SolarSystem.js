@@ -13,7 +13,6 @@ import educationPanelTexture from '../assets/textures/panels/moon_text.jpg';
 import projectsPanelTexture from '../assets/textures/panels/earth_text.jpg';
 import skillsPanelTexture from '../assets/textures/panels/mars_text.jpg';
 import contactPanelTexture from '../assets/textures/panels/jupiter_text.jpg';
-import { faEnvelope, faPhone, faLocationDot, faGlobe } from '@fortawesome/free-solid-svg-icons';
 
 // Function to calculate position on orbit
 const getOrbitPosition = (distance, angle) => {

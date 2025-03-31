@@ -13,6 +13,11 @@ function App() {
     document.body.style.height = `${100 * sectionsConfig.length}vh`;
   }, []);
 
+  // Add it to the title update
+  useEffect(() => {
+    document.title = `Dylan Spilberg - ${sectionsConfig[currentSection].name}`;
+  }, [currentSection]);
+
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'fixed' }}>
       <Canvas

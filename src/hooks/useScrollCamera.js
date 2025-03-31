@@ -131,7 +131,6 @@ export const useScrollCamera = (sections) => {
         currentPosition.z * 0.3 + targetPosition.z * 0.7  // Bias towards target
       );
 
-      const currentDistance = sections[currentSection].viewOffset || getIdealCameraDistance(sections[currentSection].size);
       const targetDistance = sections[targetSection].viewOffset || getIdealCameraDistance(sections[targetSection].size);
 
       // Create a single smooth curve instead of three segments
@@ -185,7 +184,7 @@ export const useScrollCamera = (sections) => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('directNavigation', handleDirectNavigation);
     };
-  }, [currentSection, sections.length]);
+  }, [animateToSection, camera, sections]);
 
   // Initial setup
   useEffect(() => {
@@ -206,7 +205,7 @@ export const useScrollCamera = (sections) => {
       }
       isAnimating.current = false;
     };
-  }, []);
+  }, [camera, sections]);
 
   return currentSection;
 };
