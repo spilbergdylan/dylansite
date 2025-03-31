@@ -184,7 +184,7 @@ export const useScrollCamera = (sections) => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('directNavigation', handleDirectNavigation);
     };
-  }, [animateToSection, camera, sections]);
+  }, [animateToSection, camera, sections, currentSection]);
 
   // Initial setup
   useEffect(() => {
