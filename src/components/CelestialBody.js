@@ -81,11 +81,11 @@ const InfoPanel = ({ content, isActive, planetSize, color, panelConfig }) => {
                 <Text3D
                   font="/fonts/helvetiker_regular.typeface.json"
                   size={planetSize * config.title.fontSize}
-                  height={planetSize * 0.02}
-                  bevelEnabled
-                  bevelThickness={0.01}
-                  bevelSize={0.005}
-                  bevelSegments={3}
+                  height={planetSize * 0.005}
+                  bevelEnabled={false}
+                  bevelThickness={0}
+                  bevelSize={0}
+                  bevelSegments={0}
                   center
                 >
                   {config.title.text}
@@ -94,7 +94,7 @@ const InfoPanel = ({ content, isActive, planetSize, color, panelConfig }) => {
                     metalness={0.5}
                     roughness={0.2}
                     emissive={config.title.color}
-                    emissiveIntensity={0.2}
+                    emissiveIntensity={0.65}
                   />
                 </Text3D>
                 
@@ -102,20 +102,20 @@ const InfoPanel = ({ content, isActive, planetSize, color, panelConfig }) => {
                   position={[0, -planetSize * 0.08, 0]}
                   font="/fonts/helvetiker_regular.typeface.json"
                   size={planetSize * config.description.fontSize}
-                  height={planetSize * 0.01}
-                  bevelEnabled
-                  bevelThickness={0.005}
-                  bevelSize={0.002}
-                  bevelSegments={2}
+                  height={planetSize * 0.005}
+                  bevelEnabled={false}
+                  bevelThickness={0}
+                  bevelSize={0}
+                  bevelSegments={0}
                   center
                 >
                   {config.description.text.replace('\n', '\n\n')}
                   <meshStandardMaterial 
                     color={config.description.color}
-                    metalness={0.3}
+                    metalness={0}
                     roughness={0.3}
                     emissive={config.description.color}
-                    emissiveIntensity={0.1}
+                    emissiveIntensity={.65}
                   />
                 </Text3D>
               </>
@@ -125,11 +125,11 @@ const InfoPanel = ({ content, isActive, planetSize, color, panelConfig }) => {
                 <Text3D
                   font="/fonts/helvetiker_regular.typeface.json"
                   size={planetSize * (config.fontSize || fontSize)}
-                  height={planetSize * 0.015}
-                  bevelEnabled
-                  bevelThickness={0.008}
-                  bevelSize={0.003}
-                  bevelSegments={2}
+                  height={planetSize * 0.005}
+                  bevelEnabled={false}
+                  bevelThickness={0}
+                  bevelSize={0}
+                  bevelSegments={0}
                   center
                 >
                   {section.map((line, i) => {
@@ -139,21 +139,21 @@ const InfoPanel = ({ content, isActive, planetSize, color, panelConfig }) => {
                         <Text3D
                           font="/fonts/helvetiker_regular.typeface.json"
                           size={planetSize * (config.fontSize || fontSize)}
-                          height={planetSize * 0.015}
-                          bevelEnabled
-                          bevelThickness={0.008}
-                          bevelSize={0.003}
-                          bevelSegments={2}
+                          height={planetSize * 0.005}
+                          bevelEnabled={false}
+                          bevelThickness={0}
+                          bevelSize={0}
+                          bevelSegments={0}
                           center
                           position={[-lineWidth/2, 0, 0]}
                         >
                           {line}
                           <meshStandardMaterial 
                             color={config.color || "white"}
-                            metalness={0.4}
+                            metalness={0}
                             roughness={0.3}
                             emissive="white"
-                            emissiveIntensity={0.15}
+                            emissiveIntensity={0.65}
                           />
                         </Text3D>
                       </group>
@@ -172,6 +172,7 @@ const InfoPanel = ({ content, isActive, planetSize, color, panelConfig }) => {
 const CelestialBody = ({ name, type, position, size, color, isActive, initialRotation = 0, content, textures, panelConfig }) => {
   const meshRef = useRef();
   const textRingRef = useRef();
+  const ringRef = useRef();
   
   // Load textures if provided, only include defined textures
   const textureKeys = {};
@@ -180,7 +181,7 @@ const CelestialBody = ({ name, type, position, size, color, isActive, initialRot
   if (textures.roughnessMap) textureKeys.roughnessMap = textures.roughnessMap;
   if (textures.aoMap) textureKeys.aoMap = textures.aoMap;
   if (textures.displacementMap) textureKeys.displacementMap = textures.displacementMap;
-  if (textures.panelTexture) textureKeys.panelTexture = textures.panelTexture;
+  if (textures.ringTexture) textureKeys.ringTexture = textures.ringTexture;
 
   const loadedTextures = useTexture(textureKeys);
 
@@ -188,16 +189,39 @@ const CelestialBody = ({ name, type, position, size, color, isActive, initialRot
     if (type === 'sun') {
       // Remove sun rotation
       // meshRef.current.rotation.y += 0.005;
-    } else if (isActive) {
-      // Only rotate to face camera when active
-      const cameraPosition = state.camera.position;
-      const planetPosition = new THREE.Vector3(...position);
-      const directionToCamera = new THREE.Vector3()
-        .subVectors(cameraPosition, planetPosition)
-        .normalize();
+    } else {
+      // Calculate orbital motion
+      const orbitSpeed = 0.0002; // Adjust this value to control orbit speed
+      const orbitRadius = Math.sqrt(position[0] * position[0] + position[2] * position[2]);
+      const currentAngle = Math.atan2(position[2], position[0]);
+      const newAngle = currentAngle + orbitSpeed;
+      
+      // Update position based on orbital motion
+      const newX = Math.cos(newAngle) * orbitRadius;
+      const newZ = Math.sin(newAngle) * orbitRadius;
+      meshRef.current.position.x = newX;
+      meshRef.current.position.z = newZ;
+      
+      // Update ring position if it exists
+      if (ringRef.current) {
+        ringRef.current.position.x = newX;
+        ringRef.current.position.z = newZ;
+      }
 
-      const angle = Math.atan2(directionToCamera.x, directionToCamera.z);
-      meshRef.current.rotation.y = angle + Math.PI;
+      if (isActive) {
+        // Only rotate to face camera when active
+        const cameraPosition = state.camera.position;
+        const planetPosition = new THREE.Vector3(newX, position[1], newZ);
+        const directionToCamera = new THREE.Vector3()
+          .subVectors(cameraPosition, planetPosition)
+          .normalize();
+
+        const angle = Math.atan2(directionToCamera.x, directionToCamera.z);
+        meshRef.current.rotation.y = angle + Math.PI;
+        if (ringRef.current) {
+          ringRef.current.rotation.y = angle + Math.PI;
+        }
+      }
     }
     
     // Text ring rotation continues independently
@@ -242,10 +266,10 @@ const CelestialBody = ({ name, type, position, size, color, isActive, initialRot
                 {letter}
                 <meshStandardMaterial 
                   color="white"
-                  metalness={0.8}
+                  metalness={0}
                   roughness={0.2}
                   emissive="white"
-                  emissiveIntensity={0.2}
+                  emissiveIntensity={0.65}
                 />
               </Text3D>
             </group>
@@ -273,11 +297,11 @@ const CelestialBody = ({ name, type, position, size, color, isActive, initialRot
             aoMap={loadedTextures.aoMap}
             displacementMap={loadedTextures.displacementMap}
             displacementScale={0.2}
-            color="white"
-            roughness={0.7}
-            metalness={.5}
+            color={type === 'sun' ? "white" : "#ffffff"}
+            roughness={0.3}
+            metalness={type === 'sun' ? -4 : -4}
             emissive={color}
-            emissiveIntensity={type === 'sun' ? 0.3 : 0.1}
+            emissiveIntensity={type === 'sun' ? 0 : 0}
             envMapIntensity={1}
             transparent={false}
             anisotropy={16}
@@ -298,6 +322,26 @@ const CelestialBody = ({ name, type, position, size, color, isActive, initialRot
           />
         )}
       </mesh>
+
+      {/* Add ring for Saturn */}
+      {name === 'Mentorship' && (
+        <mesh 
+          ref={ringRef} 
+          position={position}
+          rotation={[Math.PI / 2, initialRotation, 2]}
+        >
+          <ringGeometry args={[size * 1.2, size * 1.8, 64]} />
+          <meshStandardMaterial
+            map={loadedTextures.ringTexture}
+            color="#FFFFF"
+            roughness={0.5}
+            metalness={-6}
+            transparent={true}
+            opacity={1}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      )}
     </group>
   );
 };

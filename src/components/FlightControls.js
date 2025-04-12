@@ -1,60 +1,52 @@
 import React from 'react';
 import styled from 'styled-components';
 
+const FlightControlsContainer = styled.div`
+  @media (max-width: 768px) {
+    .control-panel {
+      display: none !important;
+    }
+  }
+`;
+
 const ControlPanel = styled.div`
   position: fixed;
   right: 20px;
-  top: 75%;
-  transform: translateY(-50%) perspective(2000px) rotateY(-10deg);
+  top: 50%;
+  transform: translateY(-50%);
   background-color: #2A363B;
-  border-radius: 12px;
-  padding: 25px 20px;
-  box-shadow: 
-    /* Inner panel shadow */
-    inset 0 1px 8px rgba(0, 0, 0, 0.4),
-    /* Outer edge highlight */
-    0 -1px 0px #4A5A60,
-    /* Outer panel shadow */
-    0 5px 15px rgba(0, 0, 0, 0.4),
-    /* Side shadow for 3D effect */
-    -10px 10px 20px rgba(0, 0, 0, 0.6),
-    /* Ambient light reflection */
-    0 0 20px rgba(255, 255, 255, 0.1);
+  border: 2px solid #1A262B;
+  border-radius: 10px;
+  padding: 20px;
+  width: 18vw;
+  min-width: 200px;
+  max-width: 300px;
+  height: 80vh;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  width: 300px;
-  height: 480px;
-  border: 2px solid #1A262B;
-  border-right: 15px solid #1A262B;
-  transform-style: preserve-3d;
-  & > * {
-    pointer-events: auto;
-  }
-  pointer-events: all;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  overflow: hidden;
+  pointer-events: auto;
 `;
 
 const NavigationControls = styled.div`
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
-  padding: 0;
+  justify-content: space-between;
   margin-top: auto;
-  margin-bottom: 20px;
-  width: 100%;
-  z-index: 10;
+  padding-top: 20px;
+  gap: 10px;
 `;
 
 const NavButton = styled.button`
   background: linear-gradient(to bottom, #3D4D53, #2A363B);
   border: 2px solid #1A262B;
   border-radius: 8px;
-  padding: 12px 25px;
-  min-width: 100px;
+  padding: 1vh 1.5vw;
+  min-width: 80px;
   color: #B8B8B8;
   font-family: 'Courier New', monospace;
-  font-size: 16px;
+  font-size: 1.2vh;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -95,8 +87,8 @@ const PanelTitle = styled.div`
   color: #B8B8B8;
   font-family: 'Courier New', monospace;
   text-align: center;
-  padding: 8px;
-  margin: -5px -5px 10px -5px;
+  padding: 1vh 1vw;
+  margin: 2px -5px 1vh -5px;
   border: 2px solid #1A262B;
   border-radius: 6px;
   background: linear-gradient(to bottom, #3D4D53, #2A363B);
@@ -109,6 +101,7 @@ const PanelTitle = styled.div`
     /* Outer highlight */
     0 1px 0 rgba(255, 255, 255, 0.1);
   position: relative;
+  font-size: 1.5vh;
   
   &:before {
     content: '';
@@ -131,27 +124,27 @@ const ButtonContainer = styled.div`
   justify-content: center;
   align-items: center;
   flex: 1;
-  gap: 20px;
-  margin-top: 20px;
+  gap: 2vh;
+  margin-top: 2vh;
 `;
 
 const PlanetButton = styled.button`
-  background: ${props => props.isActive 
+  background: ${({ isActive, color }) => isActive 
     ? `linear-gradient(to bottom, 
-        ${props.color}30, 
-        ${props.color}50
+        ${color}30, 
+        ${color}50
       )`
     : 'linear-gradient(to bottom, #3D4D53, #2A363B)'
   };
-  border: 2px solid ${props => props.isActive ? props.color : '#1A262B'};
+  border: 2px solid ${({ isActive, color }) => isActive ? color : '#1A262B'};
   border-radius: 8px;
-  padding: 0 15px;
+  padding: 0 1vw;
   width: 70%;
-  height: 50px;
-  color: ${props => props.isActive ? props.color : '#B8B8B8'};
+  height: 5vh;
+  color: ${({ isActive, color }) => isActive ? color : '#B8B8B8'};
   font-family: 'Courier New', monospace;
-  font-size: 18px;
-  font-weight: ${props => props.isActive ? 'bold' : 'normal'};
+  font-size: 1.5vh;
+  font-weight: ${({ isActive }) => isActive ? 'bold' : 'normal'};
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
@@ -163,7 +156,7 @@ const PlanetButton = styled.button`
     /* Outer highlight top */
     0 1px 0 rgba(255, 255, 255, 0.1),
     /* Active glow */
-    0 0 ${props => props.isActive ? '15px' : '0'} ${props => props.color}30;
+    0 0 ${({ isActive, color }) => isActive ? '15px' : '0'} ${({ color }) => color}30;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -173,15 +166,15 @@ const PlanetButton = styled.button`
   
   &:hover {
     background: linear-gradient(to bottom,
-      ${props => props.color}30,
-      ${props => props.color}50
+      ${({ color }) => color}30,
+      ${({ color }) => color}50
     );
-    border-color: ${props => props.color};
+    border-color: ${({ color }) => color};
     transform: translateY(-1px);
     box-shadow:
       inset 0 1px 3px rgba(0, 0, 0, 0.3),
       0 1px 0 rgba(255, 255, 255, 0.1),
-      0 0 20px ${props => props.color}30;
+      0 0 20px ${({ color }) => color}30;
   }
 
   &:active {
@@ -192,14 +185,14 @@ const PlanetButton = styled.button`
     content: '';
     position: absolute;
     top: 50%;
-    right: 15px;
-    width: 12px;
-    height: 12px;
-    background: ${props => props.isActive 
+    right: 1vw;
+    width: 0.8vw;
+    height: 0.8vw;
+    background: ${({ isActive, color }) => isActive 
       ? `radial-gradient(circle at center,
-          ${props.color},
-          ${props.color}80 40%,
-          ${props.color}40 70%
+          ${color},
+          ${color}80 40%,
+          ${color}40 70%
         )`
       : '#1A262B'
     };
@@ -207,20 +200,9 @@ const PlanetButton = styled.button`
     transform: translateY(-50%);
     box-shadow: 
       /* Inner light */
-      inset 0 0 2px ${props => props.isActive ? props.color : '#4A5A60'},
+      inset 0 0 2px rgba(255, 255, 255, 0.3),
       /* Outer glow */
-      0 0 ${props => props.isActive ? '10px' : '0'} ${props => props.color},
-      /* Surface reflection */
-      0 -1px 0 rgba(255, 255, 255, 0.2);
-    border: 1px solid ${props => props.isActive ? props.color : '#4A5A60'};
-  }
-
-  & > span {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-right: 40px;
+      0 0 5px ${({ isActive, color }) => isActive ? color : 'rgba(0, 0, 0, 0.5)'};
   }
 `;
 
@@ -228,33 +210,73 @@ const Screws = styled.div`
   position: absolute;
   width: 10px;
   height: 10px;
-  background: radial-gradient(circle at 30% 30%, 
-    #4A5A60,
-    #2A363B
-  );
+  background: #1A262B;
   border-radius: 50%;
-  border: 1px solid #1A262B;
-  box-shadow:
-    /* Inner shadow */
-    inset 0 1px 2px rgba(0, 0, 0, 0.8),
-    /* Outer highlight */
-    0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    inset 0 0 5px rgba(0, 0, 0, 0.5),
+    0 0 5px rgba(255, 255, 255, 0.2);
   
-  &:before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 4px;
-    height: 1px;
-    background: #1A262B;
-    transform: translate(-50%, -50%);
+  &.top-left {
+    top: 10px;
+    left: 10px;
+  }
+  
+  &.top-right {
+    top: 10px;
+    right: 10px;
+  }
+  
+  &.bottom-left {
+    bottom: 10px;
+    left: 10px;
+  }
+  
+  &.bottom-right {
+    bottom: 10px;
+    right: 10px;
+  }
+`;
+
+const MobileControls = styled.div`
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  pointer-events: none;
+  
+  @media (max-width: 768px) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+  }
+`;
+
+const MobileNavButton = styled(NavButton)`
+  min-width: 80px;
+  padding: 12px 20px;
+  font-size: 14px;
+  margin: 0;
+  pointer-events: auto;
+  background: linear-gradient(to bottom, #3D4D53, #2A363B);
+  border: 2px solid #1A262B;
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(5px);
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 6px 12px rgba(0, 0, 0, 0.4),
+      0 0 25px rgba(0, 0, 0, 0.3);
   }
 
-  &.top-left { top: 10px; left: 10px; transform: rotate(45deg); }
-  &.top-right { top: 10px; right: 10px; transform: rotate(135deg); }
-  &.bottom-left { bottom: 10px; left: 10px; transform: rotate(-45deg); }
-  &.bottom-right { bottom: 10px; right: 10px; transform: rotate(-135deg); }
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
 `;
 
 const FlightControls = ({ sections, currentSection, onNavigate }) => {
@@ -271,42 +293,59 @@ const FlightControls = ({ sections, currentSection, onNavigate }) => {
   };
 
   return (
-    <ControlPanel>
-      <Screws className="top-left" />
-      <Screws className="top-right" />
-      <Screws className="bottom-left" />
-      <Screws className="bottom-right" />
-      
-      <PanelTitle>FLIGHT CONTROLS</PanelTitle>
-      
-      <ButtonContainer>
-        {sections.map((section, index) => (
-          <PlanetButton
-            key={index}
-            isActive={currentSection === index}
-            color={section.color}
-            onClick={() => onNavigate(index)}
-          >
-            <span>{section.name.toUpperCase()}</span>
-          </PlanetButton>
-        ))}
-      </ButtonContainer>
+    <FlightControlsContainer>
+      <ControlPanel className="control-panel">
+        <Screws className="top-left" />
+        <Screws className="top-right" />
+        <Screws className="bottom-left" />
+        <Screws className="bottom-right" />
+        
+        <PanelTitle>FLIGHT CONTROLS</PanelTitle>
+        
+        <ButtonContainer>
+          {sections.map((section, index) => (
+            <PlanetButton
+              key={index}
+              isActive={currentSection === index}
+              color={section.color}
+              onClick={() => onNavigate(index)}
+            >
+              <span>{section.name.toUpperCase()}</span>
+            </PlanetButton>
+          ))}
+        </ButtonContainer>
 
-      <NavigationControls>
-        <NavButton 
+        <NavigationControls>
+          <NavButton 
+            onClick={handlePrevious}
+            disabled={currentSection === 0}
+          >
+            ◄ PREV
+          </NavButton>
+          <NavButton 
+            onClick={handleNext}
+            disabled={currentSection === sections.length - 1}
+          >
+            NEXT ►
+          </NavButton>
+        </NavigationControls>
+      </ControlPanel>
+
+      <MobileControls>
+        <MobileNavButton 
           onClick={handlePrevious}
           disabled={currentSection === 0}
         >
           ◄ PREV
-        </NavButton>
-        <NavButton 
+        </MobileNavButton>
+        <MobileNavButton 
           onClick={handleNext}
           disabled={currentSection === sections.length - 1}
         >
           NEXT ►
-        </NavButton>
-      </NavigationControls>
-    </ControlPanel>
+        </MobileNavButton>
+      </MobileControls>
+    </FlightControlsContainer>
   );
 };
 

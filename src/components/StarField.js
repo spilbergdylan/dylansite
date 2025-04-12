@@ -1,58 +1,54 @@
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
 
-const StarField = ({ count = 5000 }) => {
-  const points = useRef();
-  
-  // Generate random star positions
-  const positions = new Float32Array(count * 3);
-  const colors = new Float32Array(count * 3);
-  
-  for (let i = 0; i < count; i++) {
+const StarField = () => {
+  const starsRef = useRef();
+  const starCount = 20000; // Number of stars
+  const starPositions = new Float32Array(starCount * 3);
+  const starColors = new Float32Array(starCount * 3);
+
+  // Generate random star positions and colors
+  for (let i = 0; i < starCount; i++) {
     const i3 = i * 3;
-    // Create a sphere of stars
-    const radius = 1000;
-    const phi = Math.random() * Math.PI * 2;
-    const theta = Math.random() * Math.PI;
     
-    positions[i3] = radius * Math.sin(theta) * Math.cos(phi);
-    positions[i3 + 1] = radius * Math.sin(theta) * Math.sin(phi);
-    positions[i3 + 2] = radius * Math.cos(theta);
+    // Random position in a sphere
+    const radius = Math.random() * 10000 + 1000; // Between 1000 and 3000 units from center
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos((Math.random() * 2) - 1);
     
-    // Random star colors (mostly white with hints of blue and yellow)
-    colors[i3] = Math.random() * 0.3 + 0.7;
-    colors[i3 + 1] = Math.random() * 0.3 + 0.7;
-    colors[i3 + 2] = Math.random() * 0.3 + 0.7;
+    starPositions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+    starPositions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+    starPositions[i3 + 2] = radius * Math.cos(phi);
+    
+    // Random star color (white to slightly blue)
+    const color = new THREE.Color();
+    color.setHSL(0.6, 0.1, Math.random() * 0.5 + 0.5);
+    starColors[i3] = color.r;
+    starColors[i3 + 1] = color.g;
+    starColors[i3 + 2] = color.b;
   }
 
-  // Slow rotation effect
+  // Create buffer geometry
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
   useFrame((state) => {
-    points.current.rotation.y += 0.0001;
-    points.current.rotation.x += 0.0001;
+    if (starsRef.current) {
+      // Slowly rotate the star field
+      starsRef.current.rotation.y += 0.0005;
+    }
   });
 
   return (
-    <points ref={points}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={positions.length / 3}
-          array={positions}
-          itemSize={3}
-        />
-        <bufferAttribute
-          attach="attributes-color"
-          count={colors.length / 3}
-          array={colors}
-          itemSize={3}
-        />
-      </bufferGeometry>
+    <points ref={starsRef} geometry={geometry}>
       <pointsMaterial
         size={2}
-        sizeAttenuation={true}
-        vertexColors={true}
-        transparent={true}
-        opacity={0.8}
+        vertexColors
+        transparent
+        opacity={1}
+        sizeAttenuation
       />
     </points>
   );

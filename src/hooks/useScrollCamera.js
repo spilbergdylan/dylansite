@@ -7,11 +7,25 @@ export const useScrollCamera = (sections) => {
   const [currentSection, setCurrentSection] = useState(0);
   const animationRef = useRef(null);
   const isAnimating = useRef(false);
+  
+  // Simple mobile detection
+  const isMobile = window.innerWidth <= 768;
+  
+  // Mobile adjustments
+  const mobileVerticalOffset = isMobile ? 0 : 0;
 
   const getIdealCameraDistance = (size) => {
     // Adjust camera distance based on planet size
     // Smaller planets need camera to be closer
     return Math.max(20, 30 - size * 2);
+  };
+
+  const getViewOffset = (section) => {
+    // Use mobileViewOffset if on mobile and it exists, otherwise use viewOffset or calculated distance
+    if (isMobile && section.mobileViewOffset !== undefined) {
+      return section.mobileViewOffset;
+    }
+    return section.viewOffset || getIdealCameraDistance(section.size);
   };
 
   const animateToSection = (targetSection) => {
@@ -22,7 +36,7 @@ export const useScrollCamera = (sections) => {
     const startPosition = camera.position.clone();
     const targetPosition = new THREE.Vector3(
       sections[targetSection].position[0],
-      sections[targetSection].position[1],
+      sections[targetSection].position[1] + mobileVerticalOffset,
       sections[targetSection].position[2]
     );
 
@@ -31,13 +45,13 @@ export const useScrollCamera = (sections) => {
     const distance = startPosition.distanceTo(targetPosition);
     
     // Adjust camera distance based on planet size
-    const cameraDistance = sections[targetSection].viewOffset || getIdealCameraDistance(sections[targetSection].size);
+    const cameraDistance = getViewOffset(sections[targetSection]);
     
-    // Create control points that maintain more consistent height and reduce spinning
+    // Create control points with no height offset to keep camera level
     const controlPoint1 = new THREE.Vector3().copy(startPosition).add(
       new THREE.Vector3(
         direction.x * distance * 0.25,
-        15, // Reduced height
+        startPosition.y - startPosition.y + targetPosition.y, // Keep at target height
         direction.z * distance * 0.25
       )
     );
@@ -45,7 +59,7 @@ export const useScrollCamera = (sections) => {
     const controlPoint2 = new THREE.Vector3().copy(targetPosition).add(
       new THREE.Vector3(
         -direction.x * distance * 0.25,
-        15, // Reduced height
+        targetPosition.y - targetPosition.y + targetPosition.y, // Keep at target height
         -direction.z * distance * 0.25
       )
     );
@@ -57,7 +71,7 @@ export const useScrollCamera = (sections) => {
       controlPoint2,
       new THREE.Vector3(
         targetPosition.x - direction.x * cameraDistance,
-        targetPosition.y, // Remove the height offset to be at eye level
+        targetPosition.y, // Keep at target height
         targetPosition.z - direction.z * cameraDistance
       )
     );
@@ -66,8 +80,16 @@ export const useScrollCamera = (sections) => {
     isAnimating.current = true;
 
     // Store initial and target look-at positions
-    const startLookAt = new THREE.Vector3(...sections[currentSection].position);
-    const endLookAt = new THREE.Vector3(...sections[targetSection].position);
+    const startLookAt = new THREE.Vector3(
+      sections[currentSection].position[0],
+      sections[currentSection].position[1] + mobileVerticalOffset,
+      sections[currentSection].position[2]
+    );
+    const endLookAt = new THREE.Vector3(
+      sections[targetSection].position[0],
+      sections[targetSection].position[1] + mobileVerticalOffset,
+      sections[targetSection].position[2]
+    );
 
     const animate = () => {
       progress += 0.008;
@@ -90,7 +112,7 @@ export const useScrollCamera = (sections) => {
         isAnimating.current = false;
         camera.position.set(
           targetPosition.x - direction.x * cameraDistance,
-          targetPosition.y,
+          targetPosition.y, // Keep at target height
           targetPosition.z - direction.z * cameraDistance
         );
         camera.lookAt(targetPosition);
@@ -120,61 +142,7 @@ export const useScrollCamera = (sections) => {
     const handleDirectNavigation = (event) => {
       const { targetSection } = event.detail;
       setCurrentSection(targetSection);
-      
-      const currentPosition = new THREE.Vector3(...sections[currentSection].position);
-      const targetPosition = new THREE.Vector3(...sections[targetSection].position);
-      
-      // Calculate a higher midpoint that's offset toward the target
-      const midPoint = new THREE.Vector3(
-        currentPosition.x * 0.3 + targetPosition.x * 0.7, // Bias towards target
-        Math.max(currentPosition.y, targetPosition.y) + 300, // Higher zoom out
-        currentPosition.z * 0.3 + targetPosition.z * 0.7  // Bias towards target
-      );
-
-      const targetDistance = sections[targetSection].viewOffset || getIdealCameraDistance(sections[targetSection].size);
-
-      // Create a single smooth curve instead of three segments
-      const curve = new THREE.CubicBezierCurve3(
-        camera.position.clone(), // Start at current camera position
-        new THREE.Vector3( // First control point - up and slightly towards target
-          camera.position.x * 0.7 + targetPosition.x * 0.3,
-          midPoint.y,
-          camera.position.z * 0.7 + targetPosition.z * 0.3
-        ),
-        new THREE.Vector3( // Second control point - high point biased towards target
-          targetPosition.x,
-          midPoint.y,
-          targetPosition.z
-        ),
-        new THREE.Vector3( // End point
-          targetPosition.x - targetDistance,
-          targetPosition.y,
-          targetPosition.z - targetDistance
-        )
-      );
-
-      let progress = 0;
-      const animate = () => {
-        progress += 0.008;
-
-        if (progress <= 1) {
-          const currentPoint = curve.getPoint(easeInOut(progress));
-          camera.position.copy(currentPoint);
-
-          // Smoothly transition look-at target
-          const lookAtProgress = easeInOut(progress);
-          const lookAtPoint = new THREE.Vector3(
-            THREE.MathUtils.lerp(currentPosition.x, targetPosition.x, lookAtProgress),
-            THREE.MathUtils.lerp(currentPosition.y, targetPosition.y, lookAtProgress),
-            THREE.MathUtils.lerp(currentPosition.z, targetPosition.z, lookAtProgress)
-          );
-          
-          camera.lookAt(lookAtPoint);
-          requestAnimationFrame(animate);
-        }
-      };
-
-      animate();
+      animateToSection(targetSection);
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -189,11 +157,15 @@ export const useScrollCamera = (sections) => {
   // Initial setup
   useEffect(() => {
     if (currentSection === 0) {
-      const initialTarget = new THREE.Vector3(...sections[0].position);
-      const initialDistance = sections[0].viewOffset || getIdealCameraDistance(sections[0].size);
+      const initialTarget = new THREE.Vector3(
+        sections[0].position[0],
+        sections[0].position[1] + mobileVerticalOffset,
+        sections[0].position[2]
+      );
+      const initialDistance = getViewOffset(sections[0]);
       camera.position.set(
         initialTarget.x - initialDistance,
-        initialTarget.y + 5,
+        initialTarget.y, // Keep at target height
         initialTarget.z + initialDistance
       );
       camera.lookAt(initialTarget);
