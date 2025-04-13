@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import SolarSystem, { sectionsConfig } from './components/SolarSystem';
 import FlightControls from './components/FlightControls';
+import SpaceshipHUD from './components/SpaceshipHUD';
 import './App.css';
 
 function App() {
@@ -52,6 +53,7 @@ function App() {
         currentSection={currentSection}
         onNavigate={handleNavigate}
       />
+      <SpaceshipHUD />
     </div>
   );
 }
